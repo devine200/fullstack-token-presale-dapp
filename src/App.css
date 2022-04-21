@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+@import "~react-component-countdown-timer/lib/styles.css";
+
+body{
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  /* background-image: url(./img/bg.png); */
+  font-family: 'Raleway', sans-serif;
+  font-family: 'Rubik Puddles', cursive;
+  font-family: 'Montserrat', sans-serif;
+  /* color: white; */
+  padding-bottom: 80px;
+}
+
+a{
+  text-decoration: none;
+  color: inherit;
+}
+
+.container{
+  width: 80%;
+  margin: auto;
+  padding: 20px;
+}
+
+header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo{
+  width: 71px;
+  /* height: 83px; */
+}
+
+.side-logo{
+  width: 100px !important;
+}
+
+main{
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 10px;
+  font: inherit;
+  border: none;
+}
+
+.btn:hover{
+  cursor: pointer !important;
+}
+
+.icon-btn{
+  display: flex;
+  align-items: center;
+}
+
+.colored-btn{
+  background: #FF3E35;
+  color: white;
+}
+
+.bordered-btn{
+  border: 2px solid #FF3E35;
+  background: transparent;
+  color: #FF3E35;
+} 
+
+.icon-btn img{
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+.icon-btn:link{
+  color: white;
+  text-decoration: none;
+}
+
+.btn-holder .colored-btn{
+  margin-right: 15px;
+}
+
+/* .main-screen-left{
+
+} */
+
+.main-screen-left{
+ line-height: 35px;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+}
+
+.main-screen-left h2{
+  font-size: 35px;
+  line-height: 45px;
+}
+
+.main-screen-right{
+  box-shadow: 0px 0px 3px #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  min-width: 400px;
+  margin-left: 20px;
+  text-align: center;
+  font-size: 18px;
+  display: flex;
+  flex-direction: column                    ;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 80px;
+}
+
+.main-screen-right label{
+  font-weight: bold;
+  color: rgb(112, 112, 112);
+}
+
+.main-screen-right input{
+  text-align: right;
+  font: inherit;
+  border: none;
+  outline: none;
+}
+
+.mint-input{
+  width:100%;
+  box-sizing:border-box;
+}
+
+.main-screen-right button{
+  width: 100%;
+  font: inherit;
+  text-transform: uppercase;
+  color: white;
+  background: #FF3E35;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  position: relative;
+  top: 20px;
+}
+
+button:hover{
+  cursor: pointer;
+}
+
+.mint-input{
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  border: 2px solid #FF3E35;
+  border-radius: 10px;
+}
+
+
+footer{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px;
+}
+
+footer span.mint-countdown-text{
+  font-size: 32px;
+}
+
+.root-react-component-countdown-timer .countBox{
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.root-react-component-countdown-timer .countBoxItem{
+  font-size: 40px !important;
+  margin-left: 20px;
+}
+
+.root-react-component-countdown-timer .countBoxItem .count{
+  padding: 10px;
+}
+
+.root-react-component-countdown-timer .countBoxItem .label{
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+@media (max-width: 1060px){
+  main{
+    flex-direction: column;
+  }
+
+  .main-screen-right{
+    margin-top: 40px;
+    margin-left: 0px;
+  }
+
+  .container{
+    width: 95%;
+    padding: 0px;
+  }
+}
+
+@media (max-width: 790px){
+  footer{
+    flex-direction: column;
+  }
+  body{
+    padding-left: 0px;
+  }
+}
+
+@media (max-width: 540px){
+  header{
+    transform: scale(.8);
+  }
+
+  .main-screen-right{
+    max-width: 450px;
+  }
+}
+
+@media (max-width: 400px){
+  .main-screen-right{
+    max-width: 380px;
+  }
+}
