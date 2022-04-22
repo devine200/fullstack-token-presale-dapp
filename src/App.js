@@ -1,15 +1,14 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import { useWeb3React } from "@web3-react/core";
-import { metaMask, supportedChainIds } from "./connectors";
+import { supportedChainIds } from "./connectors";
+import { Contract } from "@ethersproject/contracts";
 import { ethers } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import CountdownTimer from "react-component-countdown-timer";
-import { useEthers } from "@usedapp/core";
+import { useEthers, useContractFunction } from "@usedapp/core";
 
 import logo from "./img/logo.jpg";
 import walletIcon from "./img/wallet-icon.png";
-import { useInactiveListener } from "./hooks/connect";
 import glitchDaoAbi from "./artembleAbi.json";
 import ERC20Abi from "./ERC20.json";
 
@@ -25,68 +24,72 @@ function App() {
   const currentCount =
     counterStartTime + counterWhitelistPeriod - counterCurrentTime;
   const { activateBrowserWallet, active, account } = useEthers();
-  useInactiveListener();
+  console.log({ active, account: !account });
+  const glitchContract = new Contract(glitchDaoAddress, glitchDaoAbi);
+  const USDC = new Contract(
+    "0x7Ae630216c3F73bDec79131F2Be9d8032b874Ec8",
+    ERC20Abi
+  );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(async () => {
-    if (active) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = await provider.getSigner();
-      const glitchContract = new ethers.Contract(
-        glitchDaoAddress,
-        glitchDaoAbi,
-        signer
-      );
+  const { state: glitchContractState, send: glitchContractCall } =
+    useContractFunction(glitchContract, "buyTokens", {
+      transactionName: "Unwrap",
+    });
 
-      const startTime = await glitchContract.startTime();
-      const whitelistPeriod = await glitchContract.whitelistPeriod();
-      const currentTime = new Date().getTime() / 1000;
+  const { state: USDCContractState, send: USDCContractCall } =
+    useContractFunction(USDC, "approve", {
+      transactionName: "Unwrap",
+    });
 
-      if (currentTime >= startTime) {
-        setCanMint(true);
-        if (currentTime < startTime.toNumber() + whitelistPeriod.toNumber()) {
-          setInWhitelistPeriod(true);
-        }
-      }
+  useEffect(()=>{
+    if(glitchContractState.errorMessage){
+      alert(glitchContractState.errorMessage)
+    }
+    
+    if(USDCContractState.errorMessage){
+      alert(USDCContractState.errorMessage)
     }
 
-    console.log({active});
-  }, [active]);
+    // eslint-disable-next-line default-case
+    switch(glitchContractState){
+      case "Exception":
+        console.log(glitchContractState.errorMessage);
+        break;
+
+      case "Fail":
+        console.log(glitchContractState.errorMessage);
+        break;
+      
+      case "Success":
+        alert("Presale Position Created Successfully To Be Claimed In 24hrs");
+        setAmount(0);
+        break;
+    }
+  }, [glitchContractState, USDCContractState])
 
   const handleMint = async (e) => {
-    if (active) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = await provider.getSigner();
-      const USDC = new ethers.Contract(
-        "0x7Ae630216c3F73bDec79131F2Be9d8032b874Ec8",
-        ERC20Abi,
-        signer
-      );
-
-      const glitchContract = new ethers.Contract(
-        glitchDaoAddress,
-        glitchDaoAbi,
-        signer
-      );
-
+    if (active && account) {
       try {
         if (amount > 0) {
           const [wholeNumber, decimal] = stripAmount(amount);
           console.log(wholeNumber * 10 ** (6 - decimal));
-          await USDC.approve(
+
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          USDCContractCall(
             glitchDaoAddress,
             BigNumber.from("" + wholeNumber * 10 ** (6 - decimal))
           );
-          await glitchContract.buyTokens(
+
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          glitchContractCall(
             BigNumber.from("" + wholeNumber * 10 ** (6 - decimal)),
             [
               "0x5c80e82c0bed009663b6dc8d17b7dcabe075510f9ffaf014ce6a093d12a347e5",
               "0x83ddce7a8d8344327029ae74f9f0fb9658d1e764c80886e03ff1f55d3a6fd594",
-            ],
-            { gasLimit: 50000000 }
+            ]
           );
-          alert("Presale Position Created Successfully To Be Claimed In 24hrs");
-          setAmount(0);
+          console.log({ glitchContractState, USDCContractState });
+          
         }
       } catch (e) {
         alert(e.message);
@@ -154,18 +157,20 @@ function App() {
       <div className="container">
         <header>
           <img src={logo} alt="artemble-logo" className="logo" />
-          {/* <a
+          <a
             href="#"
             className="btn icon-btn colored-btn"
-            onClick={!active ? handleConnectWallet : () => {}}
+            onClick={!active || !account ? handleConnectWallet : () => {}}
           >
             <img src={walletIcon} alt="wallet-icon" />
-            {!active ? (
-              <span>Connect Wallet</span>
+            {!active || !account ? (
+              <span onClick={handleConnectWallet}>Connect Wallet</span>
             ) : (
+              // <span>{account}</span>
               <span>{shortenAccount(account)}</span>
-            )}
-          </a> */}
+            )}{" "}
+            {/**/}
+          </a>
         </header>
         <main>
           <div className="main-screen-left">
