@@ -53,10 +53,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata, Ownable {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_, uint8 decimals_) {
+    constructor(string memory name_, string memory symbol_, uint256 decimals_) {
         _name = name_;
         _symbol = symbol_;
-        _decimals = decimals_;
+        _decimals = uint8(decimals_);
     }
 
     /**

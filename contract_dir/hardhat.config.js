@@ -24,6 +24,16 @@ module.exports = {
       url: process.env.RINKEBY_URL,
       chainId: 4,
       accounts: [process.env.PRIVATE_KEY]
-    }
+    },
+    arbitrum: {
+      url: process.env.ARBITRUM_URL,
+      chainId: 42161,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+    arbitrum_testnet: {
+      url: process.env.ARBITRUM_TESTNET_URL,
+      chainId: 421611,
+      accounts: [process.env.PRIVATE_KEY]
+    },
   }
 };

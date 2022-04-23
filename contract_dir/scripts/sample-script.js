@@ -19,14 +19,14 @@ async function main() {
   const Token = await ethers.getContractFactory("ERC20");
   const NativeToken = await ethers.getContractFactory("ERC20");
 
-  const token = await Token.deploy("T", "T", ethers.BigNumber.from("6"));
-  const nativeToken = await NativeToken.deploy("T1", "T1", ethers.BigNumber.from("18"));
-  const glitch = await Glitch.deploy(token.address, nativeToken.address);
+  // const token = await Token.deploy("T", "T", ethers.BigNumber.from("6"));
+  const nativeToken = await NativeToken.deploy("GLITCH", "GLT", ethers.BigNumber.from("18"));
+  const glitch = await Glitch.deploy("0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", nativeToken.address);
   
-  await token.mintTo("0x82E65ADD41CF5df9Be92B2894E0A74D652e7dFb6", ethers.utils.parseEther("10"));
+  // await token.mintTo("0x82E65ADD41CF5df9Be92B2894E0A74D652e7dFb6", ethers.utils.parseEther("1"));
   await nativeToken.mintTo(glitch.address, ethers.utils.parseEther("5000000"));
 
-  console.log("Token deployed to:", token.address);
+  // console.log("Token deployed to:", token.address);
   console.log("NativeToken deployed to:", nativeToken.address);
   console.log("Glitch deployed to:", glitch.address);
 }

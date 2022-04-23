@@ -11,42 +11,48 @@ describe("Glitch", function () {
     token = await Token.deploy("T", "T", ethers.BigNumber.from("6"));
     nativeToken = await NativeToken.deploy("T1", "T1", ethers.BigNumber.from("18"));
     glitch = await Glitch.deploy(token.address, nativeToken.address);
-    const [_owner, _benefactor, _] = await ethers.getSigners()
+    const [_owner, _benefactor, _] = await ethers.getSigners();
+    // const accounts = await ethers.getSigners();
     owner = _owner;
     benefactor = _benefactor
     ownerAddress = await owner.getAddress();
     benefactorAddress = await benefactor.getAddress();
+    // console.log(await accounts.map(await (async (account)=>{
+    //   const address = await account.getAddress()
+    //   return address
+    // })));
   })
    
   it("Should buy token and claim token", async function () {
-    await token.mintTo(ownerAddress, ethers.BigNumber.from(""*100*10**6));
+    await token.mintTo(ownerAddress, ethers.BigNumber.from("50000000"));
     await nativeToken.mintTo(glitch.address, ethers.utils.parseEther("5000000"));
 
     const ownerBalance = await token.balanceOf(ownerAddress);
-    expect(ownerBalance).to.equal(ethers.utils.parseEther("100"));
+    expect(ownerBalance).to.equal(ethers.BigNumber.from("50000000"));
     
-    console.log(ethers.utils.formatEther(ownerBalance))
-    console.log("token decimal: ", await nativeToken.decimals())
+    // console.log({ownerBalance, glitchNativeTokenBalance: await nativeToken.balanceOf(glitch.address)})
+    // console.log(ethers.utils.formatEther(ownerBalance))
+    // console.log("token decimal: ", await nativeToken.decimals())
     
     
     const glitchBalance = await token.balanceOf(glitch.address);
-    await token.approve(glitch.address, ethers.BigNumber.from(""*50*10**6));
-    await glitch.connect(owner).buyTokens(ethers.BigNumber.from(""*50*10**6), [
-      '0x5c80e82c0bed009663b6dc8d17b7dcabe075510f9ffaf014ce6a093d12a347e5',
-      '0x83ddce7a8d8344327029ae74f9f0fb9658d1e764c80886e03ff1f55d3a6fd594'
-    ]);
+    await token.approve(glitch.address, ethers.BigNumber.from("50000000"));
+    await glitch.buyTokens(ethers.BigNumber.from("50000000"));
     const glitchNewBalance = await token.balanceOf(glitch.address);
 
-    // expect(glitchBalance).to.not.equal(glitchNewBalance);
+    expect(glitchBalance).to.not.equal(glitchNewBalance);
 
-    console.log(glitchNewBalance)
-    setTimeout(async()=>{
-      await expect(glitch.connect(owner).claim()).to.be.revertedWith("tokens cannot be claimed yet");
-      // expect(await nativeToken.balanceOf(ownerAddress)).to.not.equal(ethers.utils.parseEther("100"))
-      await glitch.forwardFunds(ethers.BigNumber.from(""+100*10**6));
-      // expect(await token.balanceOf(ownerAddress)).to.equal(glitchNewBalance);
-    }, 2000);
+    // console.log(glitchNewBalance)
+    await expect(glitch.claim()).to.not.be.revertedWith("tokens cannot be claimed yet");
+    expect(await nativeToken.balanceOf(ownerAddress)).to.not.equal(ethers.utils.parseEther("100"))
+    await glitch.forwardFunds(ethers.BigNumber.from(""+50*10**6));
+    expect(await token.balanceOf(glitch.address)).to.equal(ethers.utils.parseEther("0"));
 
+    const ownerNativeBalance = await nativeToken.balanceOf(ownerAddress);
+    await glitch.forwardNativeFunds(ethers.utils.parseEther("1000"));
+    expect(await nativeToken.balanceOf(ownerAddress)).to.be.equal(ownerNativeBalance.add(ethers.utils.parseEther("1000")));
+    
+    await expect(glitch.connect(benefactor).forwardNativeFunds(ethers.utils.parseEther("1000"))).to.be.reverted;
   });
 
   it("testing whitelist presale implemantion", async function (){
@@ -54,13 +60,8 @@ describe("Glitch", function () {
     await nativeToken.mintTo(glitch.address, ethers.utils.parseEther("5000000"));
 
     await token.connect(benefactor).approve(glitch.address, ethers.BigNumber.from(""*100*10**6));
-    await expect(glitch.connect(benefactor).buyTokens(ethers.utils.parseEther("100"), [
-      '0x5c80e82c0bed009663b6dc8d17b7dcabe075510f9ffaf014ce6a093d12a347e5',
-      '0x83ddce7a8d8344327029ae74f9f0fb9658d1e764c80886e03ff1f55d3a6fd594'
-    ])).to.not.be.revertedWith("user not whitelisted");
+    await expect(glitch.connect(benefactor).buyTokens(ethers.utils.parseEther("100"))).to.not.be.revertedWith("user not whitelisted");
     // await glitch.connect(benefactor).claim();
-    setTimeout(async ()=>{
-      await expect(glitch.connect(benefactor).claim()).to.not.be.reverted;
-    }, 2000)
+    await expect(glitch.connect(benefactor).claim()).to.be.reverted;
   })
 });
