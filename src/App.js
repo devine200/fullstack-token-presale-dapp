@@ -1,32 +1,24 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import { supportedChainIds } from "./connectors";
 import { Contract } from "@ethersproject/contracts";
-import { ethers } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import CountdownTimer from "react-component-countdown-timer";
 import {
   useEthers,
   useContractFunction,
-  useTokenAllowance,
 } from "@usedapp/core";
-import keccak256 from "keccak256";
 
 import logo from "./img/logo.jpg";
 import walletIcon from "./img/wallet-icon.png";
-import presaleAbi from "./presaleAbi.json";
-import ERC20Abi from "./ERC20.json";
+import Config from "./config.json";
 
 function App() {
-  const presaleContractAddressTestnet = "0x88A2c0F0a214027986B34F76b39AeDf7fb28CEeF";
-  // const presaleContractAddressMainnet = "0x5a44EB3334E4a8EE4e8C3AC7B6D58c5706E3c65D";
-  const presaleContractAddressMainnet = "0x78315da682a38F7dE6cC88F49a0911e8771342B6";
-  const USDCAddress = "0x2D40503890B7ce0A37A5b9b64eE2E947339AC9eB";
-  const mainnetUSDCAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
+  const {currentState, presaleAbi, ERC20Abi, supportedChainIds} = Config;
+
   const [amount, setAmount] = useState(0);
   const [isFirst, setIsFirst] = useState(true);
   const [canBuy, setCanBuy] = useState(false);
-  const counterStartTime = 1650322800;
+  const counterStartTime = (new Date()).getTime()/1000;
   const counterWhitelistPeriod = 60 * 60 * 2;
   const counterPublicSalePeriod = 60 * 30;
   const counterCurrentTime = new Date().getTime() / 1000;
@@ -34,9 +26,9 @@ function App() {
     counterStartTime + counterWhitelistPeriod - counterCurrentTime;
   const { activateBrowserWallet, active, account, chainId, deactivate } =
     useEthers();
-  console.log({ active, account: !account });
-  const presaleContract = new Contract(presaleContractAddressMainnet, presaleAbi);
-  const USDC = new Contract(mainnetUSDCAddress, ERC20Abi);
+  // console.log({ active, account: !account });
+  const presaleContract = new Contract(Config[currentState].presaleContractAddress, presaleAbi);
+  const USDC = new Contract(Config[currentState].USDCAddress, ERC20Abi);
 
   const { state: presaleContractState, send: presaleContractCall } =
     useContractFunction(presaleContract, "buyTokens", {
@@ -61,7 +53,7 @@ function App() {
       buyTokens();
     }
 
-    console.log({ presaleContractState });
+    // console.log({ presaleContractState });
     // eslint-disable-next-line default-case
     switch (presaleContractState.status) {
       case "Exception":
@@ -94,7 +86,7 @@ function App() {
           const [wholeNumber, decimal] = stripAmount(amount);
           // eslint-disable-next-line react-hooks/rules-of-hooks
           USDCContractCall(
-            presaleContractAddressMainnet,
+            Config[currentState].presaleContractAddress,
             BigNumber.from("" + wholeNumber * 10 ** (6 - decimal))
           );
 
@@ -131,18 +123,7 @@ function App() {
         window.ethereum
           .request({
             method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: "0xA4B1",
-                chainName: "Arbitrum One",
-                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-                blockExplorerUrls: ["https://arbiscan.io"],
-                nativeCurrency: {
-                  symbol: "AETH",
-                  decimals: 18,
-                },
-              },
-            ],
+            params: Config[currentState].networkParams
           })
           .then(() => {
             setIsFirst(true);
@@ -201,7 +182,7 @@ function App() {
             </p>
             <div className="btn-holder">
               <a
-                href="https://docs.glitchdao.finance"
+                href={Config[currentState].docsLink}
                 className="btn bordered-btn"
               >
                 LEARN MORE
