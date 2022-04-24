@@ -5,96 +5,112 @@ import { Contract } from "@ethersproject/contracts";
 import { ethers } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import CountdownTimer from "react-component-countdown-timer";
-import { useEthers, useContractFunction } from "@usedapp/core";
+import {
+  useEthers,
+  useContractFunction,
+  useTokenAllowance,
+} from "@usedapp/core";
+import keccak256 from "keccak256";
 
 import logo from "./img/logo.jpg";
 import walletIcon from "./img/wallet-icon.png";
-import glitchDaoAbi from "./artembleAbi.json";
+import presaleAbi from "./presaleAbi.json";
 import ERC20Abi from "./ERC20.json";
 
 function App() {
-  const glitchDaoAddress = "0x1a5a0BD50583729EFd21fAd4B6e7D5107bE48d36";
-  const [canMint, setCanMint] = useState(false);
-  const [inWhitelistPeriod, setInWhitelistPeriod] = useState(false);
+  const presaleContractAddressTestnet = "0x88A2c0F0a214027986B34F76b39AeDf7fb28CEeF";
+  // const presaleContractAddressMainnet = "0x5a44EB3334E4a8EE4e8C3AC7B6D58c5706E3c65D";
+  const presaleContractAddressMainnet = "0x78315da682a38F7dE6cC88F49a0911e8771342B6";
+  const USDCAddress = "0x2D40503890B7ce0A37A5b9b64eE2E947339AC9eB";
+  const mainnetUSDCAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
   const [amount, setAmount] = useState(0);
+  const [isFirst, setIsFirst] = useState(true);
+  const [canBuy, setCanBuy] = useState(false);
   const counterStartTime = 1650322800;
   const counterWhitelistPeriod = 60 * 60 * 2;
   const counterPublicSalePeriod = 60 * 30;
   const counterCurrentTime = new Date().getTime() / 1000;
   const currentCount =
     counterStartTime + counterWhitelistPeriod - counterCurrentTime;
-  const { activateBrowserWallet, active, account } = useEthers();
+  const { activateBrowserWallet, active, account, chainId, deactivate } =
+    useEthers();
   console.log({ active, account: !account });
-  const glitchContract = new Contract(glitchDaoAddress, glitchDaoAbi);
-  const USDC = new Contract(
-    "0x7Ae630216c3F73bDec79131F2Be9d8032b874Ec8",
-    ERC20Abi
-  );
+  const presaleContract = new Contract(presaleContractAddressMainnet, presaleAbi);
+  const USDC = new Contract(mainnetUSDCAddress, ERC20Abi);
 
-  const { state: glitchContractState, send: glitchContractCall } =
-    useContractFunction(glitchContract, "buyTokens", {
+  const { state: presaleContractState, send: presaleContractCall } =
+    useContractFunction(presaleContract, "buyTokens", {
       transactionName: "Unwrap",
     });
-
+  
   const { state: USDCContractState, send: USDCContractCall } =
     useContractFunction(USDC, "approve", {
       transactionName: "Unwrap",
     });
 
-  useEffect(()=>{
-    if(glitchContractState.errorMessage){
-      alert(glitchContractState.errorMessage)
-    }
-    
-    if(USDCContractState.errorMessage){
-      alert(USDCContractState.errorMessage)
+  useEffect(() => {
+    if (presaleContractState.errorMessage) {
+      alert(presaleContractState.errorMessage);
     }
 
+    if (USDCContractState.errorMessage) {
+      alert(USDCContractState.errorMessage);
+    }
+
+    if(USDCContractState.status.toLowerCase() === "success"){
+      buyTokens();
+    }
+
+    console.log({ presaleContractState });
     // eslint-disable-next-line default-case
-    switch(glitchContractState){
+    switch (presaleContractState.status) {
       case "Exception":
-        console.log(glitchContractState.errorMessage);
+        console.log(presaleContractState.errorMessage);
         break;
 
       case "Fail":
-        console.log(glitchContractState.errorMessage);
+        console.log(presaleContractState.errorMessage);
         break;
-      
+
       case "Success":
         alert("Presale Position Created Successfully To Be Claimed In 24hrs");
-        setAmount(0);
+        window.location.reload();
         break;
     }
-  }, [glitchContractState, USDCContractState])
+  }, [presaleContractState, USDCContractState]);
+
+  useEffect(() => {
+    if (!supportedChainIds.includes(chainId) && !isFirst) {
+      deactivate();
+      alert("You have connected to an unsupported chain");
+    }
+    setIsFirst(false);
+  }, [chainId]);
 
   const handleMint = async (e) => {
     if (active && account) {
       try {
         if (amount > 0) {
           const [wholeNumber, decimal] = stripAmount(amount);
-          console.log(wholeNumber * 10 ** (6 - decimal));
-
           // eslint-disable-next-line react-hooks/rules-of-hooks
           USDCContractCall(
-            glitchDaoAddress,
+            presaleContractAddressMainnet,
             BigNumber.from("" + wholeNumber * 10 ** (6 - decimal))
           );
 
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          glitchContractCall(
-            BigNumber.from("" + wholeNumber * 10 ** (6 - decimal)),
-            [
-              "0x5c80e82c0bed009663b6dc8d17b7dcabe075510f9ffaf014ce6a093d12a347e5",
-              "0x83ddce7a8d8344327029ae74f9f0fb9658d1e764c80886e03ff1f55d3a6fd594",
-            ]
-          );
-          console.log({ glitchContractState, USDCContractState });
-          
+          setCanBuy(true);
         }
       } catch (e) {
         alert(e.message);
       }
     }
+  };
+
+  const buyTokens = () => {
+    if(!canBuy) return
+    const [wholeNumber, decimal] = stripAmount(amount);
+    presaleContractCall(BigNumber.from("" + wholeNumber * 10 ** (6 - decimal)));
+    setCanBuy(false);
   };
 
   const stripAmount = (val) => {
@@ -110,39 +126,34 @@ function App() {
   const handleConnectWallet = async (e) => {
     e.preventDefault();
 
-    const currentChainId = parseInt(window.ethereum.chainId, 16);
-
-    if (window.ethereum && !supportedChainIds.includes(currentChainId)) {
+    if (window.ethereum && !supportedChainIds.includes(chainId)) {
       try {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: "0xA4B1",
-              chainName: "Arbitrum One",
-              rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-              blockExplorerUrls: ["https://arbiscan.io"],
-              nativeCurrency: {
-                symbol: "AETH",
-                decimals: 18,
+        window.ethereum
+          .request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0xA4B1",
+                chainName: "Arbitrum One",
+                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+                blockExplorerUrls: ["https://arbiscan.io"],
+                nativeCurrency: {
+                  symbol: "AETH",
+                  decimals: 18,
+                },
               },
-            },
-          ],
-        });
+            ],
+          })
+          .then(() => {
+            setIsFirst(true);
+            activateBrowserWallet();
+          });
       } catch (addError) {
         alert(addError.message);
       }
+    } else {
+      activateBrowserWallet();
     }
-    activateBrowserWallet();
-    // activate(metaMask, (e) => {
-    //   if (e.toString().toLowerCase().includes("no ethereum")) {
-    //     alert("In order to make use of this website you need metamask");
-    //   } else if (e.toString().toLowerCase().includes("already pending")) {
-    //     alert(
-    //       "Connection request already pending, check metamask plugin for approval request"
-    //     );
-    //   }
-    // });
   };
 
   const shortenAccount = (userAccount) => {

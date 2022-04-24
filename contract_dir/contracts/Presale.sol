@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "./IERC20.sol";
 import "./SafeMath.sol";
 
-contract GlitchDaoPresale {
+contract Presale {
   using SafeMath for uint256;
 
   // The token being sold
